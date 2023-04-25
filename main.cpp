@@ -54,12 +54,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	ShowWindow(hwnd, SW_SHOW);
 
-	std::string str0{ "STRING1!!!" };
-
-	std::string str1{ std::to_string(10) };
-
 	std::wstring convertString(const std::string & str);
 
+	std::wstring convertString(const std::string & str);
 
 	MSG msg{};
 
