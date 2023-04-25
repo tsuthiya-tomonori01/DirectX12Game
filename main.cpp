@@ -15,7 +15,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
-
+void Log(const std::string& message) {
+	OutputDebugStringA(message.c_str());
+}
 
 //Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
@@ -55,6 +57,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	std::string str0{ "STRING1!!!" };
 
 	std::string str1{ std::to_string(10) };
+
+	std::wstring convertString(const std::string & str);
+
 
 	MSG msg{};
 
