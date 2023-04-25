@@ -2,6 +2,11 @@
 #include <cstdint>
 #include <string>
 #include <format>
+#include <d3d12.h>
+#pragma comment(lib, "d3d12.lib")
+#include <dxgi1_6.h>
+#pragma comment(lib, "dxgi.lib")
+#include <cassert>
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	//メッセージに応じてゲーム固有の処理を行う
@@ -14,6 +19,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	}
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 }
+
 
 std::wstring ConvertString(const std::string& str) {
 	if (str.empty()) {
