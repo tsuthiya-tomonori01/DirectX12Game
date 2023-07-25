@@ -181,6 +181,11 @@ Matrix4x4 MakePerspectiveFovMatrix(float fovY, float aspectRatio, float nearClip
 	         0.0f, 0.0f,-nearClip * farClip / (farClip - nearClip), 0.0f };
 }
 
+IMGUI_IMPL_API LRESULT ImGui_ImplWin_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	return IMGUI_IMPL_API LRESULT();
+}
+
 //ウィンドウプロシージャ
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	
@@ -709,8 +714,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	ID3D12Resource* materialResource = CreateBufferResource(device, sizeof(Vector4));
 	Vector4* materialData = nullptr;
 
+	Vector4 color = Vector4(1.0f, 0.0f, 0.0f, 1.0f);
+
 	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
-	*materialData = Vector4(1.0f, 0.0f, 0.0f, 1.0f);
+	*materialData = color;
 
 	Transform transform{ {1.0f,1.0f,1.0f}, {0.0f,0.0f,0.0f}, {0.0f,0.0f,0.0f} };
 	
@@ -729,7 +736,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
 		srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
-	
 
 	MSG msg{};
 
@@ -749,6 +755,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			ImGui_ImplDX12_NewFrame();
 			ImGui_ImplWin32_NewFrame();
 			ImGui::NewFrame();
+
+			ImGui::ShowDemoWindow();
 
 			transform.rotate.y += 0.03f;
 			Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
@@ -801,8 +809,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			//描画！（DrawCall/ドローコール）。３頂点で一つのインスタンス、インスタンスについては今後
 			commandList->DrawInstanced(3, 1, 0, 0);
+			
+			ImGui::Begin("window");
 
-			ImGui::ShowDemoWindow();
+			ImGui::ColorEdit3("color", &color.x);
+			ImGui::End();
 
 			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
 
@@ -842,8 +853,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	fence->Release();
 	rtvDescriptorHeap->Release();
-	srvDescriptorHeap->Release();
 	
+
 	swapChainResources[0]->Release();
 	swapChainResources[1]->Release();
 	swapChain->Release();
@@ -856,9 +867,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	materialResource->Release();
     #ifdef _DEBUG
 	  debugController->Release();
-   #endif // _DEBUG
+   #endif _DEBUG
 	  CloseWindow(hwnd);
-
+	srvDescriptorHeap->Release();
 
 	vertexResource->Release();
 	graphicsPipelineState->Release();
@@ -887,11 +898,5 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		debug->Release();
 	}
 
-
 	return 0;
-}
-
-IMGUI_IMPL_API LRESULT ImGui_ImplWin_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	return IMGUI_IMPL_API LRESULT();
 }
