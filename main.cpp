@@ -12,6 +12,7 @@
 #include <dxcapi.h>
 #pragma comment(lib, "dxcompiler.lib")
 #include <math.h>
+
 #include "externals/imgui/imgui.h"
 #include "externals/imgui/imgui_impl_dx12.h"
 #include "externals/imgui/imgui_impl_win32.h"
@@ -723,6 +724,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	
 	Transform cameraTransform{ {1.0f,1.0f,1.0f}, {0.0f,0.0f,0.0f}, {0.0f,0.0f,-5.0f} };
 
+
+
 	//
 	//
 	IMGUI_CHECKVERSION();
@@ -767,6 +770,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix,projectionMatrix));
 			*transformationMatrixData = worldViewProjectionMatrix;
 
+			ImGui::Begin("window");
+			ImGui::ColorEdit3("color", &color.x);
+			*materialData = color;
+			ImGui::End();
+
+			ImGui::Render();
+
 			UINT backBufferIndex = swapChain->GetCurrentBackBufferIndex();
 
 			//TransitionBarrierの設定
@@ -805,16 +815,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());
 			
 			//
-			ImGui::Render();
+			
 
 			//描画！（DrawCall/ドローコール）。３頂点で一つのインスタンス、インスタンスについては今後
 			commandList->DrawInstanced(3, 1, 0, 0);
 			
-			ImGui::Begin("window");
-
-			ImGui::ColorEdit3("color", &color.x);
-			ImGui::End();
-
+			
 			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
 
 			//画面に描く処理は終わり、画面に映すので、状態を遷移
