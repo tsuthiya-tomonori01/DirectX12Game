@@ -8,6 +8,7 @@
 #include <dxgi1_6.h>
 #pragma comment(lib, "dxgi.lib")
 #include <cassert>
+#include <numbers>
 #include <dxgidebug.h>
 #pragma comment(lib, "dxguid.lib")
 #include <dxcapi.h>
@@ -928,15 +929,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//vertexDataSprite[5].position = { 640.0f,360.0f,0.0f,1.0f };
 	//vertexDataSprite[5].texcoord = { 1.0f,1.0f };
 
+	const uint32_t kSubdivision = 16;
+	const uint32_t kVertexCount = kSubdivision * kSubdivision * 6;
+
 	//実際に頂点リソースを作る
-	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * 6);
+	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * kVertexCount);
 	
 	//頂点バッファビューを作製する
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
 	//リソースの先頭のアドレスから使う
 	vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
 	//使用するリソースのサイズは頂点３つ分のサイズ
-	vertexBufferView.SizeInBytes = sizeof(VertexData) * 6;
+	vertexBufferView.SizeInBytes = UINT(sizeof(VertexData) * kVertexCount);
 	//１頂点あたりのサイズ
 	vertexBufferView.StrideInBytes = sizeof(VertexData);
 
@@ -944,7 +948,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
 
-	vertexData[0].position = { -0.5f, 0.5f, 0.0f, 1.0f };
+	/*vertexData[0].position = { -0.5f, 0.5f, 0.0f, 1.0f };
 	vertexData[0].texcoord = { 0.0f,0.0f };
 
 	vertexData[1].position = { 0.5f, 0.5f, 0.0f, 1.0f };
@@ -960,7 +964,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	vertexData[4].texcoord = { 1.0f,1.0f };
 
 	vertexData[5].position = { -0.5f,-0.5f,0.0f,1.0f };
-	vertexData[5].texcoord = { 0.0f,1.0f };
+	vertexData[5].texcoord = { 0.0f,1.0f };*/
 
 	//ビューポート
 	D3D12_VIEWPORT viewport{};
@@ -979,6 +983,50 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	scissorRect.right = kClientWidth;
 	scissorRect.top = 0;
 	scissorRect.bottom = kClientHeight;
+
+	//球体用頂点
+	const float kPi = std::numbers::pi_v<float>;
+	const float kLonEvery = (2 * kPi) / float(kSubdivision);
+	const float kLatEvery = kPi / float(kSubdivision);
+	for (uint32_t latIndex = 0; latIndex < kSubdivision; ++latIndex) {
+		float lat = -kPi / 2.0f + kLatEvery * latIndex;
+		for (uint32_t lonIndex = 0; lonIndex < kSubdivision; ++lonIndex) {
+			uint32_t start = (latIndex * kSubdivision + lonIndex) * 6;
+			float lon = lonIndex * kLonEvery;
+			//a
+			vertexData[start].position.x = cos(lat) * cos(lon);
+			vertexData[start].position.y = sin(lat);
+			vertexData[start].position.z = cos(lat) * sin(lon);
+			vertexData[start].position.w = 1.0f;
+			vertexData[start].texcoord.x = float(lonIndex) / float(kSubdivision);
+			vertexData[start].texcoord.y = 1.0f - float(latIndex) / float(kSubdivision);
+			//b
+			vertexData[start + 1].position.x = cos(lat + kLatEvery) * cos(lon);
+			vertexData[start + 1].position.y = sin(lat + kLatEvery);
+			vertexData[start + 1].position.z = cos(lat + kLatEvery) * sin(lon);
+			vertexData[start + 1].position.w = 1.0f;
+			vertexData[start + 1].texcoord.x = float(lonIndex) / float(kSubdivision);
+			vertexData[start + 1].texcoord.y = 1.0f - float(latIndex + 1) / float(kSubdivision);
+			//c
+			vertexData[start + 2].position.x = cos(lat) * cos(lon + kLonEvery);
+			vertexData[start + 2].position.y = sin(lat);
+			vertexData[start + 2].position.z = cos(lat) * sin(lon + kLonEvery);
+			vertexData[start + 2].position.w = 1.0f;
+			vertexData[start + 2].texcoord.x = float(lonIndex + 1) / float(kSubdivision);
+			vertexData[start + 2].texcoord.y = 1.0f - float(latIndex) / float(kSubdivision);
+			//c
+			vertexData[start + 3] = vertexData[start + 2];
+			//b
+			vertexData[start + 4] = vertexData[start + 1];
+			//d
+			vertexData[start + 5].position.x = cos(lat + kLatEvery) * cos(lon + kLonEvery);
+			vertexData[start + 5].position.y = sin(lat + kLatEvery);
+			vertexData[start + 5].position.z = cos(lat + kLatEvery) * sin(lon + kLonEvery);
+			vertexData[start + 5].position.w = 1.0f;
+			vertexData[start + 5].texcoord.x = float(lonIndex+1) / float(kSubdivision);
+			vertexData[start + 5].texcoord.y = 1.0f - float(latIndex+1) / float(kSubdivision);
+		}
+	}
 
 	ID3D12Resource* materialResource = CreateBufferResource(device, sizeof(Vector4));
 	Vector4* materialData = nullptr;
@@ -1015,7 +1063,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	const uint32_t desriptorSizeRTV = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	const uint32_t desriptorSizeDSV = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 	//
-	const uint32_t kNumInstance = 10;
+	const uint32_t kNumInstance = 1;
 	Microsoft::WRL::ComPtr<ID3D12Resource> instancingResource =
 		CreateBufferResource(device, sizeof(TransformationMatrix) * kNumInstance);
 	TransformationMatrix* instancingData = nullptr;
@@ -1172,7 +1220,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResourceSprite->GetGPUVirtualAddress());*/
 
 			//描画！（DrawCall/ドローコール）。３頂点で一つのインスタンス、インスタンスについては今後
-			commandList->DrawInstanced(6, kNumInstance, 0, 0);
+			commandList->DrawInstanced(kVertexCount, kNumInstance, 0, 0);
 		
 
 			//画面に描く処理は終わり、画面に映すので、状態を遷移
