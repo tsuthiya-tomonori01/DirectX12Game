@@ -1221,9 +1221,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			ImGui::Begin("window");
 
-			ImGui::ColorEdit4("color", &color.x);
+			ImGui::ColorEdit4("Color", &color.x);
 			materialData->color = color;
-			
+
+			ImGui::ColorEdit4("LightColor", &directionalLightData->color.x);
+			directionalLightData->color;
+
+			ImGui::SliderFloat3("slider float", &directionalLightData->direction.x, -2.0f, 2.0f);
+			directionalLightData->direction;
+
 			ImGui::End();
 			ImGui::SetWindowSize({ 200,100 });
 
